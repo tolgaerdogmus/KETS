@@ -13,8 +13,8 @@ df1.head()
 
 
 #
-rat ='/Users/avokado/PycharmProjects/miuul/Final/title.ratings.tsv'
-df2 = pd.read_csv(rat, sep='\t')
+rat_m ='/Users/avokado/PycharmProjects/miuul/Final/title.ratings.tsv'
+df2 = pd.read_csv(rat_m, sep='\t')
 df2.head()
 
 
