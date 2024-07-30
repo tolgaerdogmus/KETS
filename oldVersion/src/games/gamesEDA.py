@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import numpy as np
 pd.set_option('display.max_columns', None)
@@ -47,4 +48,14 @@ pd.set_option('display.width', 500)
 # Movies                            (string) Game movie URL | Oyun tanitim filmi sayfa adresi.
 # TODO: HTML etiket icin tarama yap varsa temizle.
 # TODO: Genres ve Tags birlestirme konusunda karar ver, gerekirse tek ve daha zengin tek bir degisken haline getir
+# TODO: Digerleriyle ortak tur/genre kolonu olustur
 
+file_path = os.path.join('src', 'games', 'datasets', 'games.csv')
+df = pd.read_csv(file_path)
+
+df.head()
+df.info()
+
+# Uppercase, eliminate space feature names, dates to convert date
+df.columns = df.columns.str.upper()
+df.columns = df.columns.str.replace(' ', '_')
