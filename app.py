@@ -2,30 +2,89 @@ import streamlit as st
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from movie_rec_sys import recommend_most_popular_per_genre, get_similar_movies
+
 
 # Load the dataset
-df = pd.read_csv('src/movies/datasets/movies.csv', low_memory=False)
-df['GENRES'] = df['GENRES'].str.lower()
+df = pd.read_csv('src/movies/datasets/movies_31-tem.csv', low_memory=False)
 
-# Create combined features for similarity calculations
-df['combined_features'] = df['ORIGINAL_TITLE'] + ' ' + df['GENRES'] + ' ' + df['DIRECTORS']
-df['combined_features'] = df['combined_features'].str.replace('.', '', regex=False)
-df['combined_features'] = df['combined_features'].str.replace(',', ' ', regex=False)
-df['combined_features'] = df['combined_features'].str.lower()
+def recommend_top(df, genre='Comedy', media_type='movie', count=1, vote_threshold = 500):
+    # Filter the dataset by the selected genre and type
+    # GENRE ve TYPE e gore filtrele
+    # VOTE_COUNT u belli bir sayidan fazla olsun
+    genre_filter = df['GENRES'].str.contains(genre, case=False, na=False)
+    type_filter = df['TYPE'].str.contains(media_type, case=False, na=False)
+    vote_count_filter = df['VOTE_COUNT'] > vote_threshold
+    filtered_df = df[genre_filter & type_filter & vote_count_filter]
 
-filt_df = df[(df['VOTE_COUNT'] > 2000) & (df['TYPE'] == 'movie')]
-filt_df = filt_df.reset_index(drop=True)
+    # Sort the filtered dataset by average rating in descending order and select the top 10
+    # Filtrelenmis datasetini AVG_RATING e gore sirala ve en bastan 10 tane getir
+    top_10 = filtered_df.sort_values(by='AVG_RATING', ascending=False).head(count)
+
+    # Select relevant columns to display
+    top_10_recommendations = top_10[['TCONST', 'ORIGINAL_TITLE', 'TYPE', 'AVG_RATING', 'VOTE_COUNT', 'GENRES']]
+
+    return top_10_recommendations
+
+# Example usage: Recommend top 10 popular movies for the genre 'Horror', vote count > 50k
+# Ornek kullanim: en populer 10 adet Horror turu ve oy sayisi 50binin uzerinde
+recommend_top(df, 'comedy', 'movie', count= 10, vote_threshold=50000)
+
+
+def recommend_most_popular_per_genre(df):
+    # Create an empty list to store recommendations
+    # Tavsiye icin bos bir liste tanimla
+    recommendations = []
+
+    # Get all unique genresS
+    # Tum virgul ile ayrilmis genreleri tek tek al
+    all_genres = set(genre for sublist in df['GENRES'].dropna().str.split(',') for genre in sublist)
+
+    for genre in all_genres:
+        # Filter the dataset by the selected genre
+        # genre basina veri setini filtrele
+        genre_filter = df['GENRES'].str.contains(genre, case=False, na=False)
+        filtered_df = df[genre_filter]
+
+        if not filtered_df.empty:
+            # Get the most popular movie for this genre
+            # Genre icin en vote_countu ve avg_rating i yuksekleri diz ve birinci elemani al
+            most_popular = filtered_df.sort_values(by=['VOTE_COUNT', 'AVG_RATING'], ascending=False).iloc[0]
+            recommendations.append(most_popular)
+
+    # Create a DataFrame for the recommendations
+    # Data frame e cevir
+    recommendations_df = pd.DataFrame(recommendations)
+
+    # Ensure the DataFrame has the required columns
+    # Gereken kolonlarin olup olmadigini kontrol et
+    if not recommendations_df.empty:
+        # Select relevant columns to display, ensuring all columns exist
+        # Gosterilecek kolonlari sec
+        columns_to_display = ['TCONST', 'ORIGINAL_TITLE', 'TYPE', 'AVG_RATING', 'VOTE_COUNT', 'GENRES']
+        recommendations_df = recommendations_df[[
+            col for col in columns_to_display if col in recommendations_df.columns
+        ]]
+
+    return recommendations_df
+
+
+# Kullanim:
+print(recommend_most_popular_per_genre(df))
+
+#TODO: SONRA DEGISTIRILEBILIR DF ISMI FONKSIYONLARDA KULLANILDIGI GIBI BIRAKIYORUM SON TEMIZLIKTE DUZENLENIR
+
+filt_df = df.copy()
+
+# Shrink dataframe for cosine sim
+#filt_df = df[(df['VOTE_COUNT'] > 2000) & (df['TYPE'] == 'movie')]
+#filt_df = filt_df.reset_index(drop=True)
 
 tfidf = TfidfVectorizer(stop_words='english')
 
-# df[df['GENRES'].isnull()] # bos yok
 
 # TF-IDF Matrisinin olusturulmasi
-tfidf_matrix = tfidf.fit_transform(filt_df['combined_features'])
+tfidf_matrix = tfidf.fit_transform(filt_df['COMBINED_FEATURES'])
 
-# tfidf_matrix.shape
-# tfidf.get_feature_names_out()
 
 # Cosine Similarity Matrisinin Olusturulmasi
 cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
