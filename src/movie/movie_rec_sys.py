@@ -1,14 +1,19 @@
 import pandas as pd
 import numpy as np
+
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+
+
 
 pd.set_option('display.max_columns', None)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 pd.set_option('display.width', 500)
 pd.set_option('display.expand_frame_repr', False)
 
-df = pd.read_csv('src/movies/datasets/movies.csv', low_memory=False) # DtypeWarning kapatmak icin
+# df = pd.read_csv('src/movies/datasets/movies.csv', low_memory=False) # DtypeWarning kapatmak icin
+df = pd.read_csv('src/movies/datasets/movies.csv', low_memory=False)
+df['GENRES'] = df['GENRES'].str.lower()
 ##############################################################################
 # TEMIZLEME ISLEMLERI - ARTİK GEREK YOK AMA FİKİR İCİN BİRAKTİM
 ##############################################################################
@@ -30,6 +35,7 @@ df = pd.read_csv('src/movies/datasets/movies.csv', low_memory=False) # DtypeWarn
 df.shape # (249804, 8)
 
 df.info()
+df.head()
 
 #  #   Column          Non-Null Count   Dtype
 # ---  ------          --------------   -----
@@ -43,7 +49,7 @@ df.info()
 #  7   YEAR            249804 non-null  datetime64[ns]  ---- Filmin tarihi
 # dtypes: float64(1), int64(1), object(6)
 
-df['TYPE'].value_counts()
+# df['TYPE'].value_counts()
 
 # TYPE
 # tvEpisode       121696
@@ -57,37 +63,39 @@ df['TYPE'].value_counts()
 # tvSpecial         1783
 # tvShort            261
 # Name: count, dtype: int64
-
+tv_series_df = df[(df['TYPE'] == 'tvSeries') & (df['VOTE_COUNT'] > 5000)]
+tv_episodes_df = df[(df['TYPE'] == 'tvEpisode') & (df['ORIGINAL_TITLE'] == 'Tokyo Ghoul: re')]
 # Split GENRES if needed
 # Gerekirse GENRES i parcalama kodu
 # all_genres = set(genre for sublist in df['GENRES'].dropna().str.split(',') for genre in sublist)
-# {'Action',
-#  'Adult',
-#  'Adventure',
-#  'Animation',
-#  'Biography',
-#  'Comedy',
-#  'Crime',
-#  'Documentary',
-#  'Drama',
-#  'Family',
-#  'Fantasy',
-#  'Film-Noir',
-#  'Game-Show',
-#  'History',
-#  'Horror',
-#  'Music',
-#  'Musical',
-#  'Mystery',
-#  'News',
-#  'Reality-TV',
-#  'Romance',
-#  'Sci-Fi',
-#  'Sport',
-#  'Talk-Show',
-#  'Thriller',
-#  'War',
-#  'Western'}
+# {'action',
+#  'adult',
+#  'adventure',
+#  'animation',
+#  'biography',
+#  'comedy',
+#  'crime',
+#  'documentary',
+#  'drama',
+#  'family',
+#  'fantasy',
+#  'film-noir',
+#  'game-show',
+#  'history',
+#  'horror',
+#  'music',
+#  'musical',
+#  'mystery',
+#  'news',
+#  'reality-tv',
+#  'romance',
+#  'sci-fi',
+#  'short',
+#  'sport',
+#  'talk-show',
+#  'thriller',
+#  'war',
+#  'western'}
 
 ##################################################################################################
 # FILTRELEME YONTEMI ILE TAVSIYE KODLARI
@@ -112,8 +120,7 @@ def recommend_top(df, genre='Comedy', media_type='movie', count=1, vote_threshol
 
 # Example usage: Recommend top 10 popular movies for the genre 'Horror', vote count > 50k
 # Ornek kullanim: en populer 10 adet Horror turu ve oy sayisi 50binin uzerinde
-recommend_top(df, 'Comedy', 'movie', count= 10, vote_threshold=50000)
-
+recommend_top(df, 'comedy', 'movie', count= 10, vote_threshold=50000)
 
 
 def recommend_most_popular_per_genre(df):
@@ -121,7 +128,7 @@ def recommend_most_popular_per_genre(df):
     # Tavsiye icin bos bir liste tanimla
     recommendations = []
 
-    # Get all unique genres
+    # Get all unique genresS
     # Tum virgul ile ayrilmis genreleri tek tek al
     all_genres = set(genre for sublist in df['GENRES'].dropna().str.split(',') for genre in sublist)
 
@@ -153,8 +160,33 @@ def recommend_most_popular_per_genre(df):
 
     return recommendations_df
 
+
 # Kullanim:
 print(recommend_most_popular_per_genre(df))
+
+
+# Shrin dataframe for cosine sim
+#filt_df = df[(df['VOTE_COUNT'] > 3000) & (df['AVG_RATING'] > 6)]
+#filt_df = filt_df.reset_index(drop=True)
+#filt_df.shape
+
+#Text alanlarını birleştirme
+df['combined_features'] = df['ORIGINAL_TITLE'] + ' ' + df['GENRES'] + ' ' + df['DIRECTORS']
+# Replace periods (.) with empty strings and commas (,) with spaces
+df['combined_features'] = df['combined_features'].str.replace('.', '', regex=False)
+df['combined_features'] = df['combined_features'].str.replace(',', ' ', regex=False)
+df['combined_features'] = df['combined_features'].str.lower()
+df.head()
+
+#########################################################
+# Shrink dataframe for cosine sim - BURADA KIRPMAK ZORUNDA KALDİM
+filt_df = df[(df['VOTE_COUNT'] > 2000) & (df['TYPE'] == 'movie')]
+
+# reset index cunku out of bounds hatasi veriyor sonra
+filt_df = filt_df.reset_index(drop=True)
+filt_df.shape
+
+
 
 ##################################################################################################
 # ICERIK TEMELLI FILTRELEME YONTEMI ILE TAVSIYE KODLARI - GENRES
@@ -162,29 +194,76 @@ print(recommend_most_popular_per_genre(df))
 # GENRES KISMININ MATEMATIKSEL OLARAK TEMSILI ICIN METIN VEKTORLESTIRME
 
 # Tek basina anlam tasimayan ingilizce kelimeleri cikar orn: and, or, of vs.
+#tfidf = TfidfVectorizer(stop_words='english')
+
+# TF-IDF ile özellik çıkarma - Dask kullanarak
+
+# Tek basina anlam tasimayan ingilizce kelimeleri cikar orn: and, or, of vs.
 tfidf = TfidfVectorizer(stop_words='english')
 
 # df[df['GENRES'].isnull()] # bos yok
 
 # TF-IDF Matrisinin olusturulmasi
-tfidf_matrix = tfidf.fit_transform(df['GENRES'])
+tfidf_matrix = tfidf.fit_transform(filt_df['combined_features'])
 
-tfidf_matrix.shape # (249804, 31)
-
-tfidf.get_feature_names_out()
-
-# array(['action', 'adult', 'adventure', 'animation', 'biography', 'comedy',
-#        'crime', 'documentary', 'drama', 'family', 'fantasy', 'fi', 'film',
-#        'game', 'history', 'horror', 'music', 'musical', 'mystery', 'news',
-#        'noir', 'reality', 'romance', 'sci', 'short', 'sport', 'talk',
-#        'thriller', 'tv', 'war', 'western'], dtype=object)
+# tfidf_matrix.shape
+# tfidf.get_feature_names_out()
 
 # Cosine Similarity Matrisinin Olusturulmasi
-cosine_sim = cosine_similarity(tfidf_matrix)
+cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
 
-# Benzerliklere Gore Onerilerin Yapilmasi
+# Benzerliklere gore onerilerin yapilmasi
+indices = pd.Series(filt_df.index, index=filt_df['ORIGINAL_TITLE'])
 
-# Calisma scriptinin hazirlanmasi
+# Ayni isimdekileri sil sadece sonuncusunu birak
+indices = indices[~indices.index.duplicated(keep='last')]
+
+movie_index = indices['Se7en']
+
+def get_similar_movies(movie_index, cosine_sim, df, top_n=5):
+    if 0 <= movie_index < len(cosine_sim):
+        similarity_scores = list(enumerate(cosine_sim[movie_index]))
+        similarity_scores = sorted(similarity_scores, key=lambda x: x[1], reverse=True)
+        movie_indices = [i for i, _ in similarity_scores[1:top_n+1]]  # Exclude the movie itself
+        return df.iloc[movie_indices]
+    else:
+        return f"Index {movie_index} is out of bounds."
+
+# Example usage
+movie_index = indices['Se7en'] # Replace with the index of the movie you want to find similarities for
+similar_movies_df = get_similar_movies(movie_index, cosine_sim, df)
+
+print(similar_movies_df)
 
 
-# BENZERLIKLERIN HESAPLANMASI
+# FILTRELERI HER TUR ICIN AYRI YAP SONRA VERILEN PARAMETREYE GORE ILGILI FONKSIYONU CAGIRAN YAZ
+# RUH HALI - MOD KOLONLARI OLUSTUR 'BUGUN NASIL HISSEDIYORSUN'
+# YEAR YENI BIR KATEGORI ICIN KULLANILABILIR TYPE A GORE VE RATING
+
+# Using GENRES column, create one emotional state name and put it accordingly to EMO_STAT column for each row
+
+
+# mood_to_genres = {
+#    'happy': ['Comedy', 'Family'],
+#    'sad': ['Drama', 'Romance'],
+#    'excited': ['Action', 'Adventure'],
+#   'scared': ['Horror', 'Thriller'],
+#    'curious': ['Documentary', 'Biography']
+#}
+
+#def get_genres_for_mood(mood):
+#    return mood_to_genres.get(mood, [])
+
+#def recommend_movies(mood, df, top_n=10):
+#    genres = get_genres_for_mood(mood)
+#    if not genres:
+#        return []
+#
+#    filtered_df = df[df['GENRES'].apply(lambda x: any(genre in x for genre in genres))]
+#    recommended_movies = filtered_df.sort_values(by=['AVR_RATING', 'VOTE_COUNT'], ascending=False).head(top_n)
+#    return recommended_movies
+
+#Example usage:
+#mood = 'happy'  # Replace with user's mood
+#recommendations = recommend_movies(mood, movies_df)
+#print(recommendations)
