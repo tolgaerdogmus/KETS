@@ -1,3 +1,4 @@
+import streamlit as st
 import pandas as pd
 import numpy as np
 
@@ -63,8 +64,8 @@ df.head()
 # tvSpecial         1783
 # tvShort            261
 # Name: count, dtype: int64
-tv_series_df = df[(df['TYPE'] == 'tvSeries') & (df['VOTE_COUNT'] > 5000)]
-tv_episodes_df = df[(df['TYPE'] == 'tvEpisode') & (df['ORIGINAL_TITLE'] == 'Tokyo Ghoul: re')]
+# tv_series_df = df[(df['TYPE'] == 'tvSeries') & (df['VOTE_COUNT'] > 5000)]
+# tv_episodes_df = df[(df['TYPE'] == 'tvEpisode') & (df['ORIGINAL_TITLE'] == 'Tokyo Ghoul: re')]
 # Split GENRES if needed
 # Gerekirse GENRES i parcalama kodu
 # all_genres = set(genre for sublist in df['GENRES'].dropna().str.split(',') for genre in sublist)
@@ -236,6 +237,10 @@ similar_movies_df = get_similar_movies(movie_index, cosine_sim, df)
 print(similar_movies_df)
 
 
+
+
+
+# A CODE THAT CAN FIND TCONST BY MOVIE NAME AND VICE VERSA
 # FILTRELERI HER TUR ICIN AYRI YAP SONRA VERILEN PARAMETREYE GORE ILGILI FONKSIYONU CAGIRAN YAZ
 # RUH HALI - MOD KOLONLARI OLUSTUR 'BUGUN NASIL HISSEDIYORSUN'
 # YEAR YENI BIR KATEGORI ICIN KULLANILABILIR TYPE A GORE VE RATING
