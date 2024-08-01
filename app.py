@@ -27,7 +27,7 @@ def recommend_top(df, genre='Comedy', media_type='movie', count=1, vote_threshol
 
 # Example usage: Recommend top 10 popular movies for the genre 'Horror', vote count > 50k
 # Ornek kullanim: en populer 10 adet Horror turu ve oy sayisi 50binin uzerinde
-recommend_top(df, 'comedy', 'movie', count= 10, vote_threshold=50000)
+# recommend_top(df, 'comedy', 'movie', count= 10, vote_threshold=50000)
 
 
 def recommend_most_popular_per_genre(df):
@@ -83,6 +83,7 @@ tfidf = TfidfVectorizer(stop_words='english')
 
 
 # TF-IDF Matrisinin olusturulmasi
+# ORIGINAL_TITLE + GENRES + DIRECTORS + OVERVIEW + YEAR
 tfidf_matrix = tfidf.fit_transform(filt_df['COMBINED_FEATURES'])
 
 
@@ -93,7 +94,7 @@ cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
 indices = pd.Series(filt_df.index, index=filt_df['ORIGINAL_TITLE'])
 
 
-def get_similar_movies(tconst, cosine_sim=cosine_sim, df=filt_df, top_n=5):
+def get_similar_movies(tconst, cosine_sim=cosine_sim, df=filt_df, top_n=10):
     movie_index = df.index[df['TCONST'] == tconst].tolist()[0]
     if not isinstance(movie_index, int):
         raise ValueError("Movie index is not an integer.")
@@ -109,15 +110,15 @@ def get_similar_movies(tconst, cosine_sim=cosine_sim, df=filt_df, top_n=5):
 
 
 # Streamlit interface
-st.title("Movie Recommendation System")
+st.title("K.E.T.S.")
 
 # Get most popular movies per genre
 popular_movies_df = recommend_most_popular_per_genre(df)
 
 # Select Movie
-movie_choice = st.selectbox("Choose a movie:", popular_movies_df['ORIGINAL_TITLE'])
+movie_choice = st.selectbox("Bir film seç:", popular_movies_df['ORIGINAL_TITLE'])
 
-if st.button("Find Similar Movies", key="find_similar_button"):
+if st.button("Benzer filmler bul", key="find_similar_button"):
     movie_tconst = popular_movies_df[popular_movies_df['ORIGINAL_TITLE'] == movie_choice]['TCONST'].values[0]
     similar_movies = get_similar_movies(movie_tconst, cosine_sim=cosine_sim, df=filt_df)
     st.write(f"Similar movies to {movie_choice}:")
