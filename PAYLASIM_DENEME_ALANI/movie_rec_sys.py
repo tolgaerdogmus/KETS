@@ -13,7 +13,7 @@ pd.set_option('display.width', 500)
 pd.set_option('display.expand_frame_repr', False)
 
 # df = pd.read_csv('src/movies/datasets/movies.csv', low_memory=False) # DtypeWarning kapatmak icin
-df = pd.read_csv('src/movies/datasets/movies.csv', low_memory=False)
+df = pd.read_csv('../src/movies/datasets/movies.csv', low_memory=False)
 df['GENRES'] = df['GENRES'].str.lower()
 ##############################################################################
 # TEMIZLEME ISLEMLERI - ARTİK GEREK YOK AMA FİKİR İCİN BİRAKTİM
