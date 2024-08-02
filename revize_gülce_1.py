@@ -413,7 +413,7 @@ Ama genresle ilgili cok sey yaptik diger fonksiyonlarda belki burda bir farklili
 O kismi degisitiroyrum simdilik karar verince  düzeltiriz.  type yerine baska bir sey ekleyebiliriz. 
 '''
 def recommend_movies_by_type(df):
-    # Veriyi TYPE sütununa göre grupla
+    # Veriyi TYPE sütununa göre grupla # TYPE DEĞİL GENRES
     grouped_df = df.groupby('GENRES')
 
     recommendations = []
