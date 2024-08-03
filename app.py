@@ -15,6 +15,30 @@ pd.set_option('display.expand_frame_repr', False)
 # Load the dataset
 df = pd.read_csv('src/movies/datasets/movies_31-tem.csv', low_memory=False)
 
+# GENERAL VARIABLES #########################################################################
+
+# era categories for rec_by_era and streamlit components to use
+ERA_CATEGORIES = {
+    'Golden Age': (1900, 1949),
+    'Classical Era': (1950, 1969),
+    'New Hollywood': (1970, 1989),
+    'Modern Era': (1990, 2009),
+    'Contemporary Era': (2010, 2024)
+}
+
+MOOD_TO_GENRES = {
+    'Huzurlu': (['comedy', 'adventure', 'family', 'animation'], []),
+    'Duygusal': (['drama', 'romance', 'family'], []),
+    'Hareketli': (['action', 'war', 'thriller', 'crime', 'adventure', 'western', 'sport'], []),
+    'Karanlik': (['horror', 'thriller'], ['action', 'musical']),
+    'Gizemli': (['mystery', 'crime', 'thriller'], []),
+    'Geek': (['sci-fi', 'fantasy', 'animation'], []),
+    'Dans': (['musical', 'music'], []),
+    'Cocuk': (['animation', 'comedy', 'family', 'musical'], ['adult', 'war', 'horror', 'thriller', 'crime']),
+    'Entel': (['biography', 'history', 'documentary', 'film-noir', 'short'], [])
+}
+
+# END GENERAL VARIABLES #####################################################################
 
 # İÇERİK TEMELLİDE KULLANILACAK DATAFRAME ve TF-IDF İŞLEMLERİ #############################################
 # Sadece tf-idf e sokulacak olan filtrelenecek veriseti oluştur. Diğer fonksiyonlar için normal df kullanılıyor.
@@ -146,25 +170,23 @@ def get_similar_by_title(title, cosine_sim=cosine_sim, df=filtre_df, count=10):
 
 # deneme_sim = get_similar_by_title('itanic', count=10)  # TEST AMAÇLIDIR
 
-def follow_your_mood(df=df, mood='Huzurlu', count=10):
-    # Karanlik[0] = istenilen turler Karanlik[1] = haric tutulacaklar
-    mood_to_genres = {
-        'Huzurlu': (['comedy', 'adventure', 'family', 'animation'], []),
-        'Duygusal': (['drama', 'romance', 'family'], []),
-        'Hareketli': (['action', 'war', 'thriller', 'crime', 'adventure', 'western', 'sport'], []),
-        'Karanlik': (['horror', 'thriller'], ['action', 'musical']),
-        'Gizemli': (['mystery', 'crime', 'thriller'], []),
-        'Geek': (['sci-fi', 'fantasy', 'animation'], []),
-        'Dans': (['musical', 'music'], []),
-        'Cocuk': (['animation', 'comedy', 'family', 'musical'], ['adult', 'war', 'horror', 'thriller', 'crime']),
-        'Entel': (['biography', 'history', 'documentary', 'film-noir', 'short'], [])
-    }
+def follow_your_mood(df, mood='Huzurlu', count=10):
+    """
+    Ruh haline uygun filmleri öneren fonksiyon.
 
-    if mood not in mood_to_genres:
-        print("Seni Ruhsuz!")
-        return
+    Parametreler:
+    df (pd.DataFrame): Filmler hakkında bilgileri içeren DataFrame.
+    mood (str): Ruh hali.
+    count (int): Getirilecek film sayısı.
 
-    selected_genres, excluded_genres = mood_to_genres[mood]
+    Döndürülen:
+    pd.DataFrame: Önerilen filmler DataFrame'i.
+    """
+    if mood not in MOOD_TO_GENRES:
+        st.write("Seni Ruhsuz!")
+        return pd.DataFrame()  # Return an empty DataFrame if mood is not found
+
+    selected_genres, excluded_genres = MOOD_TO_GENRES[mood]
     selected_genres = set(selected_genres)
     excluded_genres = set(excluded_genres)
 
@@ -175,7 +197,7 @@ def follow_your_mood(df=df, mood='Huzurlu', count=10):
     filtered_df = df[df['GENRES'].apply(genre_match)]
 
     if filtered_df.empty:
-        print(f"{mood} ruh haline uygun film bulunamadı.")
+        st.write(f"{mood} ruh haline uygun film bulunamadı.")
         return pd.DataFrame()  # Return an empty DataFrame if no movies are found
 
     movies_for_mood = filtered_df.nlargest(count, ['VOTE_COUNT', 'AVG_RATING'])
@@ -197,9 +219,75 @@ def rec_random_movies(df=filtre_df, count=10):
 
     return sorted_movies
 
-# Example usage
 # random_movies = rec_random_movies(filtre_df, 10) # TEST AMAÇLIDIR
+# print(type(random_movies)) # TEST AMAÇLIDIR
+def rec_top_directors(df=df, dir_count=5, movie_count=5):
+    """
+    En çok izlenen beş yönetmene göre rastgele 5 film önerisi yapan fonksiyon.
 
+    Parametreler:
+    df (pd.DataFrame): Filmler hakkında bilgileri içeren DataFrame.
+    dir_count (int): En çok izlenen yönetmen sayısı.
+    movie_count (int): Her yönetmenden seçilecek film sayısı.
+
+    Döndürülen:
+    pd.DataFrame: Önerilen filmler DataFrame'i.
+    """
+    # Yönetmen başına toplam izlenme (oy) sayısını hesapla ve en çok izlenenleri seç
+    top_directors = df.groupby('DIRECTORS')['VOTE_COUNT'].sum().nlargest(dir_count).index
+
+    recommendations = []
+
+    for director in top_directors:
+        # Yönetmen bazında filtreleme ve rastgele n film seç
+        director_movies = df[df['DIRECTORS'] == director].sample(n=min(movie_count, df[df['DIRECTORS'] == director].shape[0]))
+
+        # Sadece gerekli kolonları seç
+        director_movies = director_movies[['TCONST', 'DIRECTORS', 'ORIGINAL_TITLE', 'AVG_RATING']]
+
+        # Yönetmen ve filmleri ekle
+        for _, movie in director_movies.iterrows():
+            recommendations.append(movie.to_dict())
+
+    return pd.DataFrame(recommendations)
+
+
+# En çok izlenen beş 5 yönetmene göre  rastgele 5 film. Bunuda degistirebiliriz.
+# print(rec_top_directors()) # TEST AMAÇLIDIR
+
+def rec_by_era(df=df, start_year=1900, end_year=1949, count=10):
+    """
+    Belirtilen döneme göre film önerisi yapan fonksiyon.
+
+    Parametreler:
+    df (pd.DataFrame): Filmler hakkında bilgileri içeren DataFrame.
+    start_year (int): Başlangıç yılı.
+    end_year (int): Bitiş yılı.
+    count (int): Getirilecek film sayısı.
+
+    Döndürülen:
+    pd.DataFrame: Önerilen filmler DataFrame'i.
+    """
+    # Ensure 'YEAR' is in datetime format
+    if not pd.api.types.is_datetime64_any_dtype(df['YEAR']):
+        df['YEAR'] = pd.to_datetime(df['YEAR'], errors='coerce')
+
+    # Create datetime objects for start and end years
+    start_date = pd.Timestamp(year=start_year, month=1, day=1)
+    end_date = pd.Timestamp(year=end_year, month=12, day=31)
+
+    # Filter movies by the specified year range
+    era_movies = df[(df['YEAR'] >= start_date) & (df['YEAR'] <= end_date)]
+
+    # Sort movies by 'VOTE_COUNT' and 'AVG_RATING'
+    sorted_movies = era_movies.sort_values(by=['VOTE_COUNT', 'AVG_RATING'], ascending=[False, False])
+
+    # Select top movies
+    top_movies = sorted_movies[['TCONST', 'DIRECTORS', 'ORIGINAL_TITLE', 'AVG_RATING']].head(count)
+
+    return top_movies
+
+rec_by_era(df)
 
 
 
@@ -210,12 +298,6 @@ def rec_random_movies(df=filtre_df, count=10):
 
 
 # all_genres = set(genre for sublist in df['GENRES'].dropna().str.split(',') for genre in sublist) # TEST AMAÇLIDIR
-
-
-
-
-df.info()
-
 
 
 
@@ -248,3 +330,16 @@ elif st.button("Excited", key="excited_button"):
     st.write("You feel excited! Here's a suggestion: 'Mad Max: Fury Road'")
 elif st.button("Romantic", key="romantic_button"):
     st.write("You feel romantic! Here's a suggestion: 'Pride and Prejudice'")
+
+
+def select_movie_era():
+    # Create a dropdown list for era categories with a default item
+    era_list = ['Choose an era'] + list(ERA_CATEGORIES.keys())
+    selected_era = st.selectbox('Select a movie era:', era_list)
+
+    # If a valid era is selected, get the recommendations
+    if selected_era != 'Choose an era':
+        start_year, end_year = ERA_CATEGORIES[selected_era]
+        df = pd.read_csv('movies.csv')  # Assuming you have a DataFrame `df` with movie data
+        recommendations = rec_by_era(df, start_year, end_year)
+        st.write(recommendations)

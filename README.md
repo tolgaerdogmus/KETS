@@ -2,7 +2,7 @@
 
 ## Veri setlerimiz:
 [Veri setleri klasörü](https://drive.google.com/drive/folders/10t8OYe4i0U_OOEMwjhQNM7B3gT5KqObn)
-# K.E.T.S. 
+
 #### CHANGE LOGS  - (v.-- (temel versiyon).----(ay, gün))
 (öncesi -> sonrası)  
 ### Amaçlar:  
@@ -29,6 +29,18 @@
 	    - İsim değişikliği: top_n -> count  
 	- **follow_your_mood** değişiklikleri:  
 	    - Optimizasyon: genre_match fonksiyonu içinde set, map kullanıldı performans için ```genre_list = set(map(str.lower, map(str.strip, genres.split(','))))```  
+	    - ```MOOD_TO_GENRES = { 
+			      'Huzurlu': (['comedy', 'adventure', 'family', 'animation'], []), 
+			      'Duygusal': (['drama', 'romance', 'family'], []), 
+			      'Hareketli': (['action', 'war', 'thriller', 'crime', 'adventure', 'western', 'sport'], []), 
+			      'Karanlik': (['horror', 'thriller'], ['action', 'musical']), 
+			      'Gizemli': (['mystery', 'crime', 'thriller'], []), 
+			      'Geek': (['sci-fi', 'fantasy', 'animation'], []), 
+			      'Dans': (['musical', 'music'], []), 
+			      'Cocuk': (['animation', 'comedy', 'family', 'musical'], ['adult', 'war', 'horror', 'thriller', 'crime']), 
+			      'Entel': (['biography', 'history', 'documentary', 'film-noir', 'short'], []) 
+			      }```
+			    Genel değişkenler bölümüne eklendi, diğer fonksiyon ve kütüphanelerin ortak erişebilmesi için.
 	    - Özellik eklendi: Fonksiyon artık bir moda göre getirirken, hariç tutacağı kategorilere de bakıyor. Örneğin: Karanlık türünde horror ve thriller getirirken, Batman ve Kill Bill filmleri de getiriyordu çünkü onlar da thriller fakat bir The Sixth Sense gibi bir thriller değil. Şu an çok daha sağlıklı sonuçlar veriyor. Bu sayede gelen sonuçlar çok daha sağlıklı hale getirilebilir. Bu kategoriler için de konuşulması gerekir.  
 	    - Eskiden son filtrede ilk AVG_RATING ve arkasından VOTE_COUNT a göre filtreliyordu. Bunların yerleri değiştirildi. Çünkü AVG_RATING i ilk baz alıyordu ve bunda da az oy kullanılmış filmler araya kaçıyordu. VOTE_COUNT ilk daha çok ilgi görmüş filmleri süzüp sonra da AVG_RATING kullanarak onların da içinden puanı yüksekleri diziyor. ```movies_for_mood = filtered_df.nlargest(count, ['VOTE_COUNT', 'AVG_RATING'])```  
 	    - Eklendi - sona return eklendi programatik olarak başka fonksiyonların (streamlit) da kullanabileceği  hale gelmesi için, ekrana print alma silindi.  
@@ -40,10 +52,21 @@
 	- **recommend_top_directors_movies**   
 		- İsim değişikliği - recommend_top_directors_movies -> rec_top_directors
 	    - Eklendi - dir_count parametresi eklendi ve varsayılanı 5 yapıldı. Yönetmen sayısı için.
-	    - Eklendi - movie_count parametresi eklendi ve varsayılanı 10 yapıldı. Film sayısı için.
+	    - Eklendi - movie_count parametresi eklendi ve varsayılanı 5 yapıldı. Film sayısı için.
 	    - İsim değişikliği - top_5_directors -> top_n_directors
 	    - İsim değişikliği - random_10_movies -> random_n_movies
-	      
+	    - Optimizasyon - recommendations listesine Movies atanırken list comprehension kullanıldı. 
+	- **recommend_movies_by_nostalgic_category**
+		- İsim değişikliği - recommend_movies_by_nostalgic_category -> rec_by_era
+		- Eklendi - start_year, end_year ve count parametreleri eklendi.
+		- ```era_categories = {  
+			    'Golden Age': (1900, 1949),  
+			    'Classical Era': (1950, 1969),  
+			    'New Hollywood': (1970, 1989),  
+			    'Modern Era': (1990, 2009),  
+			    'Contemporary Era': (2010, 2024)  
+				}```
+	     Genel değişkenler bölümüne eklendi. Bir kaç ayrı fonksiyon ve kütüphane ortaklaşa kullanacağı için. 
   
 ## Genel Kod Değişiklikleri:  
 - #### BETA v.05.0803
@@ -67,5 +90,7 @@
   
 ## Genel UX Değişiklikleri 
 - #### BETA v.05.0803
-	- 
+	- select_movie_era
+		- Streamlit listesini genel değişkenlerden ERA_CATEGORIES değerleriyle dolduran bir fonksiyon
+	
 (çalışma devam ediyor)
