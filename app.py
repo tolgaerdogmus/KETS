@@ -34,9 +34,33 @@ MOOD_TO_GENRES = {
     'Gizemli': (['mystery', 'crime', 'thriller'], []),
     'Geek': (['sci-fi', 'fantasy', 'animation'], []),
     'Dans': (['musical', 'music'], []),
-    'Cocuk': (['animation', 'comedy', 'family', 'musical'], ['adult', 'war', 'horror', 'thriller', 'crime']),
+    'Cocuk': (['animation', 'family', 'musical'], ['action', 'adult', 'war', 'horror', 'thriller', 'crime', 'western']),
     'Entel': (['biography', 'history', 'documentary', 'film-noir', 'short'], [])
 }
+
+# Mapping for display names
+MOOD_DISPLAY_NAMES = {
+    'Huzurlu': 'Huzurlu 😊',
+    'Duygusal': 'Duygusal 😢',
+    'Hareketli': 'Hareketli ⚡',
+    'Karanlik': 'Karanlik 🌑',
+    'Gizemli': 'Gizemli 🕵️',
+    'Geek': 'Geek 🤓',
+    'Dans': 'Dans 💃',
+    'Cocuk': 'Kids 🧒',
+    'Entel': 'Intellectual 📚'
+}
+
+
+genre_categories = [
+    'action', 'adventure', 'sci-fi', 'fantasy',
+    'animation', 'family', 'comedy',
+    'biography', 'history', 'documentary',
+    'crime', 'mystery', 'thriller',
+    'horror', 'musical', 'music',
+    'news', 'reality-tv', 'romance',
+    'sport', 'war', 'western'
+]
 
 # END GENERAL VARIABLES #####################################################################
 
@@ -68,22 +92,20 @@ indices = pd.Series(filtre_df.index, index=filtre_df['ORIGINAL_TITLE'])
 
 # FUNCTIONS ##########################################################################################
 
-def rec_top_by_genre(df=df, genre='comedy', count=1, vote_threshold = 500):
-    # Filter the dataset by the selected genre
-    # GENRE ve VOTE_COUNT gore filtrele
+def rec_top_by_genre(df, genre='comedy', count=1, vote_threshold=500):
+    if genre.lower() not in genre_categories:
+        raise ValueError(f"Genre '{genre}' not found in the list of available genres.")
 
     genre_filter = df['GENRES'].str.contains(genre, case=False, na=False)
     vote_count_filter = df['VOTE_COUNT'] > vote_threshold
     filtered_df = df[genre_filter & vote_count_filter]
 
-    # Sort the filtered dataset by average rating in descending order and select the top x count
-    # Filtrelenmis datasetini AVG_RATING e gore sirala ve en bastan x tane tane getir
     top_movies = filtered_df.sort_values(by='AVG_RATING', ascending=False).head(count)
-
-    # Select relevant columns to display
     top_recommendations_by_genre = top_movies[['TCONST', 'ORIGINAL_TITLE', 'AVG_RATING', 'VOTE_COUNT', 'GENRES']]
 
     return top_recommendations_by_genre
+
+
 
 
 # print(rec_top_by_genre(df)) # TEST AMAÇLIDIR
@@ -132,6 +154,27 @@ def rec_top_all_genres(df=df):
 
 # Kullanim:
 #print(rec_top_all_genres(df))  # TEST AMAÇLIDIR
+
+def rec_top_by_genre(df=df, genre_category='Comedy', count=1, vote_threshold=500):
+    # Ensure the genre category is lowercase
+    genre_category = genre_category.lower()
+
+    if genre_category not in genre_categories:
+        raise ValueError(f"Genre category '{genre_category}' not found.")
+
+    # Create a filter for the selected genre and vote count
+    genre_filter = df['GENRES'].str.contains(genre_category, case=False, na=False)
+    vote_count_filter = df['VOTE_COUNT'] > vote_threshold
+    filtered_df = df[genre_filter & vote_count_filter]
+
+    # Sort the filtered dataset by average rating in descending order and select the top x count
+    top_movies = filtered_df.sort_values(by='AVG_RATING', ascending=False).head(count)
+
+    # Select relevant columns to display
+    top_recommendations_by_genre = top_movies[['TCONST', 'ORIGINAL_TITLE', 'AVG_RATING', 'VOTE_COUNT', 'GENRES']]
+
+    return top_recommendations_by_genre
+
 
 def rec_most_popular(df=df, count= 1):
     # Veri setini VOTE_COUNT ve AVG_RATING'e göre sıralayarak en popüler içeriği bul
@@ -296,50 +339,77 @@ rec_by_era(df)
 
 # END FUNCTIONS ##########################################################################################
 
+# STREAMLIT INTERFACE ##########################################################################################
+def display_mood_selection(df):
+    with st.expander('Ruh haline göre tavsiyeler:', expanded=True):
+        # Create a dropdown list with a default item
+        mood_options = ['Hangi moda girmek istersin?'] + list(MOOD_DISPLAY_NAMES.values())
+        selected_mood_display_name = st.selectbox('Select Mood:', mood_options)
 
-# all_genres = set(genre for sublist in df['GENRES'].dropna().str.split(',') for genre in sublist) # TEST AMAÇLIDIR
+        # Convert selected display name back to internal mood key
+        internal_mood = next((key for key, value in MOOD_DISPLAY_NAMES.items() if value == selected_mood_display_name), None)
+
+        if internal_mood and internal_mood != 'Hangi moda girmek istersin?':
+            recommendations = follow_your_mood(df, mood=internal_mood)
+            if not recommendations.empty:
+                st.write(internal_mood + " **için sonuçlar:**")
+                st.dataframe(recommendations)
+            else:
+                st.write("No recommendations available.")
+
+def display_genre_selection(df):
+    with st.expander("Türlere göre tavsiyeler:", expanded=False):
+        genre_selection = st.selectbox("Select Genre", options=[g.capitalize() for g in genre_categories])
+
+        if st.button("Get Recommendations"):
+            try:
+                top_movies = rec_top_by_genre(df, genre_category=genre_selection, count=10)
+                if top_movies.empty:
+                    st.write(f"No movies found for genre '{genre_selection}'.")
+                else:
+                    st.write("**Top Movies:**")
+                    st.dataframe(top_movies)
+            except ValueError as e:
+                st.write(e)
+
+def select_movie_era(df):
+    with st.expander("Zaman aralıklarına göre tavsiyeler:", expanded=False):
+        # Create a dropdown list with a default item
+        era_list = ['Hangi döneme yolculuk yapalım?'] + list(ERA_CATEGORIES.keys())
+        selected_era = st.selectbox('Select a movie era:', era_list)
+
+        # Only proceed if a valid era is selected
+        if selected_era != 'Hangi döneme yolculuk yapalım?':
+            start_year, end_year = ERA_CATEGORIES[selected_era]
+            recommendations = rec_by_era(df, start_year, end_year)
+            if not recommendations.empty:
+                st.write("**Recommendations for the Era:**")
+                st.dataframe(recommendations)
+            else:
+                st.write("No recommendations available.")
 
 
+def find_similar_movies(filtre_df):
+    with st.expander("Find Similar Movies"):
+        popular_movies_df = rec_top_all_genres(filtre_df)
+        movie_choice = st.selectbox("Choose a movie:", popular_movies_df['ORIGINAL_TITLE'])
 
-# Streamlit interface
-st.title("K.E.T.S.")
+        if st.button("Find Similar Movies"):
+            movie_tconst = popular_movies_df[popular_movies_df['ORIGINAL_TITLE'] == movie_choice]['TCONST'].values[0]
+            similar_movies = get_similar_by_id(movie_tconst)
+            st.write(f"**Similar movies to {movie_choice}:**")
+            for movie in similar_movies['ORIGINAL_TITLE']:
+                st.write(movie)
 
-# Get most popular movies per genre
-popular_movies_df = rec_top_all_genres(df)
+def main():
+    # df = pd.read_csv('movies.csv')  # Ensure 'movies.csv' has the required columns
 
-# Select Movie
-movie_choice = st.selectbox("Bir film seç:", popular_movies_df['ORIGINAL_TITLE'])
+    st.title("K.E.T.S. Movie Recommendation System")
 
-if st.button("Benzer filmler bul", key="find_similar_button"):
-    movie_tconst = popular_movies_df[popular_movies_df['ORIGINAL_TITLE'] == movie_choice]['TCONST'].values[0]
-    similar_movies = get_similar_by_id(movie_tconst)
-    st.write(f"Similar movies to {movie_choice}:")
-    for movie in similar_movies['ORIGINAL_TITLE']:
-        st.write(movie)
+    display_mood_selection(df)
+    select_movie_era(df)
+    display_genre_selection(df)
+    find_similar_movies(df)
 
-
-# Emotional Mood Buttons
-st.title("How Do You Feel?")
-if st.button("Happy", key="happy_button"):
-    st.write("You feel happy! Here's a suggestion: 'The Grand Budapest Hotel'")
-elif st.button("Sad", key="sad_button"):
-    st.write("You feel sad! Here's a suggestion: 'The Pursuit of Happyness'")
-elif st.button("Scared", key="scared_button"):
-    st.write("You feel scared! Here's a suggestion: 'A Quiet Place'")
-elif st.button("Excited", key="excited_button"):
-    st.write("You feel excited! Here's a suggestion: 'Mad Max: Fury Road'")
-elif st.button("Romantic", key="romantic_button"):
-    st.write("You feel romantic! Here's a suggestion: 'Pride and Prejudice'")
-
-
-def select_movie_era():
-    # Create a dropdown list for era categories with a default item
-    era_list = ['Choose an era'] + list(ERA_CATEGORIES.keys())
-    selected_era = st.selectbox('Select a movie era:', era_list)
-
-    # If a valid era is selected, get the recommendations
-    if selected_era != 'Choose an era':
-        start_year, end_year = ERA_CATEGORIES[selected_era]
-        df = pd.read_csv('movies.csv')  # Assuming you have a DataFrame `df` with movie data
-        recommendations = rec_by_era(df, start_year, end_year)
-        st.write(recommendations)
+if __name__ == "__main__":
+    main()
