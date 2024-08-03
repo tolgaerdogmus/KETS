@@ -2,6 +2,7 @@
 import re
 import streamlit as st
 import pandas as pd
+from PIL import Image
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -341,7 +342,8 @@ rec_by_era(df)
 
 # END FUNCTIONS ##########################################################################################
 
-# STREAMLIT INTERFACE ##########################################################################################
+# STREAMLIT FUNCTIONS ##########################################################################################
+
 def display_mood_selection(df):
     with st.expander('Ruh haline göre tavsiyeler:', expanded=True):
         # Create a dropdown list with a default item
@@ -392,26 +394,64 @@ def select_movie_era(df):
 
 
 def find_similar_movies(filtre_df):
-    with st.expander("Find Similar Movies"):
+    with st.expander("Popülerlere benzer tavsiyeler:"):
         popular_movies_df = rec_top_all_genres(filtre_df)
-        movie_choice = st.selectbox("Choose a movie:", popular_movies_df['ORIGINAL_TITLE'])
+        movie_choice = st.selectbox("Film:", popular_movies_df['ORIGINAL_TITLE'])
 
-        if st.button("Find Similar Movies"):
+        if st.button("Buna benzer bul"):
             movie_tconst = popular_movies_df[popular_movies_df['ORIGINAL_TITLE'] == movie_choice]['TCONST'].values[0]
             similar_movies = get_similar_by_id(movie_tconst)
-            st.write(f"**Similar movies to {movie_choice}:**")
+            st.write(f"**{movie_choice} benzeri filmler:**")
             for movie in similar_movies['ORIGINAL_TITLE']:
                 st.write(movie)
 
 def main():
-    # df = pd.read_csv('movies.csv')  # Ensure 'movies.csv' has the required columns
+    # Adding Image to web app
+    st.set_page_config(page_title="K.E.T.S. Kişisel Eğlence Tavsiye Sistemi", page_icon='Images/Cookie_Cat.png')
+
+    # CSS to center the image
+    st.markdown(
+        """
+        <style>
+        .centered-image img {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # Define the URL or path to your image
+    banner_img_url = 'Images/Cookie_Cat.png'
+
+    # Add the image with a custom class for centering
+    st.markdown(
+        f"""
+        <div class="centered-image">
+            <img src="{banner_img_url}" width="400" alt="K.E.T.S. Sunar!">
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        """
+        <style>
+        #MainMenu {visibility: hidden; }
+        footer {visibility: hidden;}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
     st.title("K.E.T.S. Movie Recommendation System")
 
     display_mood_selection(df)
     select_movie_era(df)
     display_genre_selection(df)
-    find_similar_movies(df)
+    find_similar_movies(filtre_df)
 
 if __name__ == "__main__":
     main()

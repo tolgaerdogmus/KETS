@@ -1,2 +1,22 @@
-/PAYLASIM_DENEME_ALANI
-/.idea
+# Virtual environment
+.venv/
+
+# IDE and editor configurations
+.idea/
+
+# Python specific
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+
+# System-specific files
+.DS_Store
+Thumbs.db
+
+# Other directories to ignore
+PAYLASIM_DENEME_ALANI/
+Lib/
+Scripts/
+Include/
