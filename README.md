@@ -29,7 +29,9 @@
 	    - İsim değişikliği: top_n -> count  
 	- **follow_your_mood** değişiklikleri:  
 	    - Optimizasyon: genre_match fonksiyonu içinde set, map kullanıldı performans için ```genre_list = set(map(str.lower, map(str.strip, genres.split(','))))```  
-	    - ```MOOD_TO_GENRES = { 
+	    -  
+        - Genel değişkenler bölümüne eklendi, diğer fonksiyon ve kütüphanelerin ortak erişebilmesi için.
+          ```MOOD_TO_GENRES = {
 			      'Huzurlu': (['comedy', 'adventure', 'family', 'animation'], []), 
 			      'Duygusal': (['drama', 'romance', 'family'], []), 
 			      'Hareketli': (['action', 'war', 'thriller', 'crime', 'adventure', 'western', 'sport'], []), 
@@ -39,8 +41,7 @@
 			      'Dans': (['musical', 'music'], []), 
 			      'Cocuk': (['animation', 'comedy', 'family', 'musical'], ['adult', 'war', 'horror', 'thriller', 'crime']), 
 			      'Entel': (['biography', 'history', 'documentary', 'film-noir', 'short'], []) 
-			      }```
-			    Genel değişkenler bölümüne eklendi, diğer fonksiyon ve kütüphanelerin ortak erişebilmesi için.
+			      } ```        
 	    - Özellik eklendi: Fonksiyon artık bir moda göre getirirken, hariç tutacağı kategorilere de bakıyor. Örneğin: Karanlık türünde horror ve thriller getirirken, Batman ve Kill Bill filmleri de getiriyordu çünkü onlar da thriller fakat bir The Sixth Sense gibi bir thriller değil. Şu an çok daha sağlıklı sonuçlar veriyor. Bu sayede gelen sonuçlar çok daha sağlıklı hale getirilebilir. Bu kategoriler için de konuşulması gerekir.  
 	    - Eskiden son filtrede ilk AVG_RATING ve arkasından VOTE_COUNT a göre filtreliyordu. Bunların yerleri değiştirildi. Çünkü AVG_RATING i ilk baz alıyordu ve bunda da az oy kullanılmış filmler araya kaçıyordu. VOTE_COUNT ilk daha çok ilgi görmüş filmleri süzüp sonra da AVG_RATING kullanarak onların da içinden puanı yüksekleri diziyor. ```movies_for_mood = filtered_df.nlargest(count, ['VOTE_COUNT', 'AVG_RATING'])```  
 	    - Eklendi - sona return eklendi programatik olarak başka fonksiyonların (streamlit) da kullanabileceği  hale gelmesi için, ekrana print alma silindi.  
