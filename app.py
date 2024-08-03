@@ -4,6 +4,8 @@ import streamlit as st
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+
+
 # END IMPORTS ######################################################################################
 # SETTINGS #########################################################################################
 pd.set_option('display.max_columns', None)
