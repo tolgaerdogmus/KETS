@@ -220,7 +220,34 @@ def display_movie_list(movies, section_key):
                 st.write("Similar movies found")
         st.markdown("---")
 
-
+def add_footer():
+    footer = """
+    <style>
+    .footer {
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        background-color: #0E1117;
+        color: #FAFAFA;
+        text-align: center;
+        padding: 10px;
+        font-size: 14px;
+    }
+    .footer a {
+        color: #4CAF50;
+        text-decoration: none;
+    }
+    </style>
+    <div class="footer">
+        Developed by 
+        <a href="https://www.linkedin.com/in/tolgaerdogmus/" target="_blank">Tolga Erdoğmuş</a>, 
+        <a href="https://www.linkedin.com/in/gulcekastel/" target="_blank">Gülce Kastel</a>, 
+        <a href="https://www.linkedin.com/in/zeynep-bakan/" target="_blank">Zeynep Bakan</a>, 
+        <a href="https://www.linkedin.com/in/guldehan-cakmak/" target="_blank">Güldehan Çakmak</a>
+    </div>
+    """
+    st.markdown(footer, unsafe_allow_html=True)
 
 def show_main_page():
     st.title("🎬 K.E.T.S. Kişisel Eğlence Tavsiye Sistemi")
@@ -294,6 +321,7 @@ def show_main_page():
                 st.subheader("Discover something new:")
                 display_movie_list(random_movies, 'random')
 
+add_footer()
 
 def show_similar_movies_page(tconst):
     movie_data = df[df['TCONST'] == tconst]
@@ -305,14 +333,17 @@ def show_similar_movies_page(tconst):
         display_movie_list(similar_movies, f'similar_{tconst}')
 
         if st.button("Back to Main Page"):
-            st.session_state.page = 'main'
+            st.query_params.clear()
             st.experimental_rerun()
     else:
         st.warning(f"Movie data not found for TCONST: {tconst}")
         if st.button("Back to Main Page"):
-            st.session_state.page = 'main'
+            st.query_params.clear()
             st.experimental_rerun()
 
+    add_footer()
+
+add_footer()
 
 def display_movie_list(movies, section_key):
     for index, movie in movies.iterrows():
@@ -327,17 +358,6 @@ def display_movie_list(movies, section_key):
             st.markdown(f'<a href="{similar_movies_url}" target="_blank">Find Similar</a>', unsafe_allow_html=True)
         st.markdown("---")
 
-
-def show_similar_movies_page(tconst):
-    movie_data = df[df['TCONST'] == tconst]
-    if not movie_data.empty:
-        movie_title = movie_data['ORIGINAL_TITLE'].values[0]
-        st.title(f"Movies similar to {movie_title}")
-
-        similar_movies = get_similar_by_id(tconst, cosine_sim, df)
-        display_movie_list(similar_movies, f'similar_{tconst}')
-    else:
-        st.warning(f"Movie data not found for TCONST: {tconst}")
 
 
 def main():
