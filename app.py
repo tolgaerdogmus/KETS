@@ -2,57 +2,60 @@
 import streamlit as st
 import pandas as pd
 import re
+import base64
+from io import BytesIO
+from PIL import Image
 from streamlit_lottie import st_lottie
 import requests
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 
-
 # Set page config at the very beginning
-st.set_page_config(page_title="K.E.T.S. Movie Recommender", page_icon='🍿', layout="wide")
+st.set_page_config(page_title="KETS", page_icon='🍿', layout="wide")
 
 # era categories for rec_by_era and streamlit components to use
 ERA_CATEGORIES = {
-    'Golden Age': (1900, 1949),
-    'Classical Era': (1950, 1969),
-    'New Hollywood': (1970, 1989),
-    'Modern Era': (1990, 2009),
-    'Contemporary Era': (2010, 2024)
+    'Golden Age (1900 - 1949)': (1900, 1949),
+    'Classical (1950 - 1969)': (1950, 1969),
+    'New Hollywood (1970 - 1989)': (1970, 1989),
+    'Modern (1990 - 2009)': (1990, 2009),
+    'Contemporary (2010 - Today)': (2010, 2024)
 }
 
 MOOD_TO_GENRES = {
-    'Huzurlu': (['comedy', 'adventure', 'family', 'animation'], ['action', 'war', 'horror', 'thriller', 'crime']),
-    'Duygusal': (['drama', 'romance', 'family'], []),
-    'Hareketli': (['action', 'war', 'thriller', 'crime', 'adventure', 'western', 'sport'], ['music', 'musical']),
+    'Huzurlu': (['comedy', 'adventure', 'family', 'animation'], ['action', 'war', 'horror', 'thriller', 'crime', 'drama']),
+    'Duygusal': (['drama', 'romance', 'family'], ['action','horror', 'western', 'thriller']),
+    'Hareketli': (['action', 'sci-fi', 'war', 'thriller', 'crime', 'adventure', 'western', 'sport'], ['music', 'musical']),
     'Karanlik': (['horror', 'thriller'], ['action', 'music', 'family', 'comedy', 'romance']),
-    'Gizemli': (['mystery', 'crime', 'thriller'], []),
-    'Geek': (['sci-fi', 'fantasy', 'animation'], []),
-    'Dans': (['musical', 'music'], []),
+    'Gizemli': (['mystery', 'crime', 'thriller', 'sci-fi'], ['action', 'western', 'sport', 'family', 'comedy']),
+    'Geek': (['sci-fi', 'fantasy', 'animation'], ['family', 'music', 'musical', 'comedy', 'romance']),
+    'Dans': (['musical', 'music'], ['family', 'short', 'biography']),
     'Cocuk': (['animation', 'family', 'musical'], ['action', 'adult', 'war', 'horror', 'thriller', 'crime', 'western']),
-    'Entel': (['biography', 'history', 'documentary', 'film-noir', 'short'], [])
+    'Entel': (['biography', 'history', 'documentary', 'film-noir', 'news', 'short'], ['comedy','romance', 'horror', 'drama', 'crime', 'adventure'])
 }
 
 # Mapping for display names
+
 MOOD_DISPLAY_NAMES = {
-    'Huzurlu': 'Huzurlu 😊',
-    'Duygusal': 'Duygusal 😢',
-    'Hareketli': 'Hareketli ⚡',
-    'Karanlik': 'Karanlik 🌑',
-    'Gizemli': 'Gizemli 🕵️',
+    'Huzurlu': 'Happy 😊',
+    'Duygusal': 'Touchy-feely 😢',
+    'Hareketli': 'High tension ⚡',
+    'Karanlik': 'Darkness 🌑',
+    'Gizemli': 'Mysterious 🕵️',
     'Geek': 'Geek 🤓',
-    'Dans': 'Dans 💃',
+    'Dans': 'Dance 💃',
     'Cocuk': 'Kids 🧒',
-    'Entel': 'Intellectual 📚'
+    'Entel': 'Brainiac 🧠'
 }
 
 genre_categories = [
     'action', 'adventure', 'sci-fi', 'fantasy',
     'animation', 'family', 'comedy',
-    'biography', 'history', 'documentary',
+    'biography','film-noir', 'history', 'documentary',
     'crime', 'mystery', 'thriller',
     'horror', 'musical', 'music',
-    'news', 'reality-tv', 'romance',
+    'news', 'romance',
     'sport', 'war', 'western'
 ]
 
@@ -136,7 +139,7 @@ def get_similar_by_title(title, cosine_sim=cosine_sim, df=df, count=10):
     movie_indices = [i for i, _ in similarity_scores[1:count + 1]]
     return df.iloc[movie_indices]
 
-def follow_your_mood(df, mood='Huzurlu', count=10):
+def follow_your_mood(df=df, mood='Huzurlu', count=10):
     if mood not in MOOD_TO_GENRES:
         st.write("Seni Ruhsuz!")
         return pd.DataFrame()
@@ -222,47 +225,100 @@ def display_movie_list(movies, section_key):
 
 def add_footer():
     footer = """
-    <style>
-    .footer {
-        position: fixed;
-        left: 0;
-        bottom: 0;
-        width: 100%;
-        background-color: #0E1117;
-        color: #FAFAFA;
-        text-align: center;
-        padding: 10px;
-        font-size: 14px;
-    }
-    .footer a {
-        color: #4CAF50;
-        text-decoration: none;
-    }
-    </style>
+        <style>
+            .footer {
+                position: fixed;
+                left: 0;
+                bottom: 0;
+                width: 100%;
+                background-color: #0E1117;
+                color: #FAFAFA;
+                text-align: center;
+                padding: 10px;
+                font-size: 14px;
+            }
+            .footer a {
+            color: #9CA3AF;  /* Subtle gray color */
+            text-decoration: none;
+            transition: color 0.3s ease;
+            }
+            .footer a:hover {
+                color: #D1D5DB;  /* Lighter gray on hover for better interactivity */
+            }
+        </style>
     <div class="footer">
-        Developed by 
-        <a href="https://www.linkedin.com/in/tolgaerdogmus/" target="_blank">Tolga Erdoğmuş</a>, 
-        <a href="https://www.linkedin.com/in/gulcekastel/" target="_blank">Gülce Kastel</a>, 
-        <a href="https://www.linkedin.com/in/zeynep-bakan/" target="_blank">Zeynep Bakan</a>, 
-        <a href="https://www.linkedin.com/in/guldehan-cakmak/" target="_blank">Güldehan Çakmak</a>
+        Developed with ❤️ by 
+        <a href="https://www.linkedin.com/in/gncgulce/" target="_blank">Gülce Kästel 🎈</a>,
+        <a href="https://www.linkedin.com/in/g%C3%BCldehan-%C3%A7akmak-uygun-a1032277/" target="_blank"> Güldehan Çakmak Uygun 🌋</a>,
+        <a href="https://www.linkedin.com/in/zeynep-bakan-ba1996308/" target="_blank"> Zeynep Bakan 🎓</a>,
+        <a href="https://www.linkedin.com/in/tolgaerdogmus/" target="_blank"> Tolga Erdoğmuş 🐱</a>       
     </div>
     """
     st.markdown(footer, unsafe_allow_html=True)
 
+
+def load_logo():
+    return Image.open('Images/kets_kedi.png')
+
+
 def show_main_page():
-    st.title("🎬 K.E.T.S. Kişisel Eğlence Tavsiye Sistemi")
-    st.markdown("Discover your next favorite movie based on your mood!")
+    # Custom CSS for unified logo and title
+    st.markdown("""
+    <style>
+    .unified-header {
+        display: flex;
+        align-items: center;
+        gap: 20px;  /* Space between logo and title */
+    }
+    .unified-header img {
+        width: 100px;  /* Adjust as needed */
+    }
+    .title-container {
+        display: flex;
+        flex-direction: column;
+    }
+    .title-container h1 {
+        margin: 0;
+        font-size: 2.5em;  /* Adjust as needed */
+    }
+    .title-container p {
+        margin: 0;
+        font-size: 1em;  /* Adjust as needed */
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Load the logo
+    logo = load_logo()
+
+    # Convert PIL Image to base64
+    buffered = BytesIO()
+    logo.save(buffered, format="PNG")
+    img_str = base64.b64encode(buffered.getvalue()).decode()
+
+    # Create unified header with logo and title
+    unified_header = f"""
+    <div class="unified-header">
+        <img src="data:image/png;base64,{img_str}" alt="KETS Logo">
+        <div class="title-container">
+            <h1>KETS</h1>
+            <p>Endless choice, limitless joy!</p>
+        </div>
+    </div>
+    """
+    st.markdown(unified_header, unsafe_allow_html=True)
 
     col1, col2 = st.columns([2, 1])
 
     with col1:
-        st.header("🌈 Mood-based Movie Recommendations")
-        mood_options = ['Choose your mood'] + list(MOOD_DISPLAY_NAMES.values())
-        selected_mood_display_name = st.selectbox('How are you feeling today?', mood_options, key='mood_selector')
+        st.header("🌡️ Vibe-o-Meter!")
+        mood_options = ['Catch your mood'] + list(MOOD_DISPLAY_NAMES.values())
+        selected_mood_display_name = st.selectbox('Tell me about your feeling', mood_options, key='mood_selector')
 
-        internal_mood = next((key for key, value in MOOD_DISPLAY_NAMES.items() if value == selected_mood_display_name), None)
+        internal_mood = next((key for key, value in MOOD_DISPLAY_NAMES.items() if value == selected_mood_display_name),
+                             None)
 
-        if internal_mood and internal_mood != 'Choose your mood':
+        if internal_mood and internal_mood != 'Catch your mood':
             if st.button("Get Recommendations"):
                 recommendations = follow_your_mood(df, mood=internal_mood)
                 if not recommendations.empty:
@@ -272,16 +328,17 @@ def show_main_page():
                     st.info("No recommendations available for this mood. Try another one!")
 
     with col2:
-        lottie_mood = load_lottieurl("https://assets5.lottiefiles.com/packages/lf20_khzniaya.json")
+        lottie_mood = load_lottieurl("https://lottie.host/51c74a6d-40e4-4957-9972-d6ac7b6ffaff/lfwdnWYJni.json")
         st_lottie(lottie_mood, key="mood_animation")
 
     # Additional features in expanders
-    with st.expander("Explore More Features"):
-        tab1, tab2, tab3, tab4, tab5 = st.tabs(["Genre Explorer", "Top Rated Movies", "Era-based Recommendations", "Director Recommendations", "Random Picks"])
+    with st.expander("🆘 Can't find right vibe?"):
+        tab1, tab2, tab3, tab4, tab5 = st.tabs(
+            ["Genre Explorer", "Top Rated", "Time Machine", "Favorite Directors", "Random Picks"])
 
         with tab1:
             st.header("🎭 Genre Explorer")
-            selected_genre = st.selectbox("Select a genre:", options=['Select a genre'] + genre_categories)
+            selected_genre = st.selectbox("Choose below:", options=['Select a genre'] + genre_categories)
 
             if selected_genre != 'Select a genre':
                 if st.button("Get Genre Recommendations"):
@@ -290,17 +347,17 @@ def show_main_page():
                     display_movie_list(top_genre_movies, 'genre')
 
         with tab2:
-            st.header("🌟 Top Rated Movies")
+            st.header("🌟 Top Rated")
             if st.button("Get Top Rated Movies"):
                 top_movies = rec_most_popular(df, count=10)
                 display_movie_list(top_movies, 'top_rated')
 
         with tab3:
-            st.header("🕰️ Era-based Recommendations")
-            era_list = ['Select an era'] + list(ERA_CATEGORIES.keys())
-            selected_era = st.selectbox('Choose an era:', era_list)
+            st.header("🕰️ Time Machine")
+            era_list = ['Select a generation'] + list(ERA_CATEGORIES.keys())
+            selected_era = st.selectbox('Go to:', era_list)
 
-            if selected_era != 'Select an era':
+            if selected_era != 'Select a generation':
                 if st.button("Get Era Recommendations"):
                     start_year, end_year = ERA_CATEGORIES[selected_era]
                     era_movies = rec_by_era(df, start_year, end_year)
@@ -308,20 +365,21 @@ def show_main_page():
                     display_movie_list(era_movies, 'era')
 
         with tab4:
-            st.header("🎬 Director Recommendations")
+            st.header("🎬 Favorite Directors")
             if st.button("Get Director Recommendations"):
                 director_movies = rec_top_directors(df)
                 st.subheader("Top movies from popular directors:")
                 display_movie_list(director_movies, 'director')
 
         with tab5:
-            st.header("🎲 Random Movie Picks")
-            if st.button("Get Random Movies"):
+            st.header("🎲 Random Picks")
+            if st.button("Try your luck"):
                 random_movies = rec_random_movies(df, count=10)
                 st.subheader("Discover something new:")
                 display_movie_list(random_movies, 'random')
 
-add_footer()
+    add_footer()
+
 
 def show_similar_movies_page(tconst):
     movie_data = df[df['TCONST'] == tconst]
@@ -343,7 +401,6 @@ def show_similar_movies_page(tconst):
 
     add_footer()
 
-add_footer()
 
 def display_movie_list(movies, section_key):
     for index, movie in movies.iterrows():
@@ -357,7 +414,6 @@ def display_movie_list(movies, section_key):
             similar_movies_url = f"?page=similar&tconst={movie['TCONST']}"
             st.markdown(f'<a href="{similar_movies_url}" target="_blank">Find Similar</a>', unsafe_allow_html=True)
         st.markdown("---")
-
 
 
 def main():
