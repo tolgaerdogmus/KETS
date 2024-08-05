@@ -345,6 +345,9 @@ def load_logo():
 
 def show_main_page():
     # Custom CSS for unified logo and title
+    if st.button("Go to Similar Movies"):
+        st.session_state.page = "similar"
+        st.rerun()
     st.markdown("""
     <style>
     .unified-header {
@@ -464,6 +467,10 @@ def show_main_page():
 
 
 def show_similar_movies_page(tconst):
+    if st.button("Go to Similar Movies"):
+        st.session_state.page = "similar"
+        st.rerun()
+
     movie_data = df[df['TCONST'] == tconst]
     if not movie_data.empty:
         movie_title = movie_data['ORIGINAL_TITLE'].values[0]
@@ -533,16 +540,6 @@ def get_poster_url(imdb_id):
         logger.error(f"Unexpected error fetching poster for IMDb ID {imdb_id}: {str(e)}")
         return f"Unexpected Error: {str(e)}"
 
-imdb_id = "tt0111161"  # Example: The Shawshank Redemption
-result = get_poster_url(imdb_id)
-if result.startswith("http"):
-    st.image(result, caption="Movie Poster")
-else:
-    st.error(f"Could not retrieve poster: {result}")
-
-# Display the logs in Streamlit
-with st.expander("Debug Logs"):
-    st.text(log_stream.getvalue())
 
 
 def display_movie_list(movies, section_key):
@@ -571,6 +568,15 @@ def display_movie_list(movies, section_key):
 
 
 def main():
+    if 'page' not in st.session_state:
+        st.session_state.page = "main"
+
+        # Navigation logic
+    if st.session_state.page == "main":
+        show_main_page()
+    elif st.session_state.page == "similar":
+        show_similar_movies_page()
+        
     try:
     # Get query parameters
         query_params = st.query_params
