@@ -10,10 +10,31 @@ import requests
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import traceback
-
+import configparser
+import os
 
 # Set page config at the very beginning
 st.set_page_config(page_title="KETS", page_icon='🍿', layout="wide")
+
+
+
+# Get the directory of the current script
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Construct the path to config.ini
+config_path = os.path.join(script_dir, 'config.ini')
+
+# Load configuration
+config = configparser.ConfigParser()
+
+# Check if the config file exists
+if os.path.exists(config_path):
+    config.read(config_path)
+    TMDB_API_KEY = config['API']['TMDB_API_KEY']
+else:
+    st.error("Configuration file not found. Please ensure config.ini is in the same directory as the script.")
+    TMDB_API_KEY = None
+
 
 # era categories for rec_by_era and streamlit components to use
 ERA_CATEGORIES = {
@@ -405,17 +426,50 @@ def show_similar_movies_page(tconst):
     add_footer()
 
 
+@st.cache_data
+def get_poster_url(imdb_id):
+    if not TMDB_API_KEY:
+        st.error("TMDB API key not found. Please check your configuration.")
+        return None
+    try:
+        search_url = f"https://api.themoviedb.org/3/find/{imdb_id}?api_key={TMDB_API_KEY}&external_source=imdb_id"
+        response = requests.get(search_url)
+        data = response.json()
+
+        if 'movie_results' in data and data['movie_results']:
+            tmdb_id = data['movie_results'][0]['id']
+            details_url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={TMDB_API_KEY}"
+            response = requests.get(details_url)
+            data = response.json()
+
+            poster_path = data.get('poster_path')
+            if poster_path:
+                return f"https://image.tmdb.org/t/p/w500{poster_path}"
+    except Exception as e:
+        st.error(f"Error fetching poster for IMDb ID {imdb_id}: {str(e)}")
+    return None
+
 def display_movie_list(movies, section_key):
     for index, movie in movies.iterrows():
-        col1, col2 = st.columns([3, 1])
+        col1, col2, col3 = st.columns([1, 3, 1])
+
         with col1:
+            poster_url = get_poster_url(movie['TCONST'])
+            if poster_url:
+                st.image(poster_url, width=100)
+            else:
+                st.write("No poster available")
+
+        with col2:
             st.write(f"**{movie['ORIGINAL_TITLE']}**")
             st.write(f"Rating: {movie['AVG_RATING']:.1f}")
             if 'DIRECTORS' in movie and pd.notna(movie['DIRECTORS']):
                 st.write(f"Director(s): {movie['DIRECTORS']}")
-        with col2:
+
+        with col3:
             similar_movies_url = f"?page=similar&tconst={movie['TCONST']}"
             st.markdown(f'<a href="{similar_movies_url}" target="_blank">Find Similar</a>', unsafe_allow_html=True)
+
         st.markdown("---")
 
 
