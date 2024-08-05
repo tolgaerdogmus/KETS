@@ -563,23 +563,16 @@ def display_movie_list(movies, section_key):
 
 
 def main():
-    if 'page' not in st.session_state:
-        st.session_state.page = "main"
-
-    if st.session_state.page == "main":
-        show_main_page()
-    elif st.session_state.page == "similar":
-        show_similar_movies_page(st.session_state.get('selected_movie'))
-
     try:
-    # Get query parameters
+        # Get query parameters
         query_params = st.query_params
 
-    # Check if we're on the similar movies page
+        # Check if we're on the similar movies page
         if query_params.get("page") == "similar" and "tconst" in query_params:
             show_similar_movies_page(query_params["tconst"])
         else:
             show_main_page()
+
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
         st.error(traceback.format_exc())
