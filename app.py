@@ -36,12 +36,12 @@ config_path = os.path.join(script_dir, 'config.ini')
 config = configparser.ConfigParser()
 
 # Check if the config file exists
-if os.path.exists(config_path):
-    config.read(config_path)
-    TMDB_API_KEY = config['API']['TMDB_API_KEY']
-else:
-    st.error("Configuration file not found. Please ensure config.ini is in the same directory as the script.")
-    TMDB_API_KEY = None
+# if os.path.exists(config_path):
+#     config.read(config_path)
+#     TMDB_API_KEY = config['API']['TMDB_API_KEY']
+# else:
+#     st.error("Configuration file not found. Please ensure config.ini is in the same directory as the script.")
+#     TMDB_API_KEY = None
 
 
 # era categories for rec_by_era and streamlit components to use
