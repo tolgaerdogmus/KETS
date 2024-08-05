@@ -12,10 +12,16 @@ from sklearn.metrics.pairwise import cosine_similarity
 import traceback
 import configparser
 import os
+import logging
 
 # Set page config at the very beginning
 st.set_page_config(page_title="KETS", page_icon='🍿', layout="wide") # wide
 # Accessing a single secret
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
 try:
     TMDB_API_KEY = st.secrets["TMDB_API_KEY"]
     #st.success("TMDB API key successfully loaded from secrets!")
@@ -481,7 +487,13 @@ def get_poster_url(imdb_id):
     try:
         search_url = f"https://api.themoviedb.org/3/find/{imdb_id}?api_key={TMDB_API_KEY}&external_source=imdb_id"
         response = requests.get(search_url)
+        response.raise_for_status()
         data = response.json()
+
+        if not data.get('movie_results'):
+            logger.warning(f"No movie results found for IMDb ID: {imdb_id}")
+            return None
+
 
         if 'movie_results' in data and data['movie_results']:
             tmdb_id = data['movie_results'][0]['id']
@@ -492,8 +504,17 @@ def get_poster_url(imdb_id):
             poster_path = data.get('poster_path')
             if poster_path:
                 return f"https://image.tmdb.org/t/p/w500{poster_path}"
+            else:
+                logger.warning(f"No poster path found for TMDB ID: {tmdb_id}")
+                return None
+            
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error making request to TMDB API: {str(e)}")
+    except KeyError as e:
+        logger.error(f"Unexpected data structure in TMDB API response: {str(e)}")
     except Exception as e:
-        st.error(f"Error fetching poster for IMDb ID {imdb_id}: {str(e)}")
+        logger.error(f"Unexpected error fetching poster for IMDb ID {imdb_id}: {str(e)}")
+
     return None
 
 def display_movie_list(movies, section_key):
@@ -506,6 +527,7 @@ def display_movie_list(movies, section_key):
                 st.image(poster_url, width=100)
             else:
                 st.write("No poster available")
+                st.write(poster_url)
 
         with col2:
             st.write(f"**{movie['ORIGINAL_TITLE']}**")
