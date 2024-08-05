@@ -63,7 +63,7 @@ MOOD_DISPLAY_NAMES = {
     'Huzurlu': 'Happy 😊',
     'Duygusal': 'Touchy-feely 😢',
     'Hareketli': 'High tension ⚡',
-    'Karanlik': 'Darkness 🌑',
+    'Karanlik': 'Darkness 💀',
     'Gizemli': 'Mysterious 🕵️',
     'Geek': 'Geek 🤓',
     'Dans': 'Dance 💃',
@@ -271,7 +271,7 @@ def add_footer():
             }
         </style>
     <div class="footer">
-        Developed with ❤️ by 
+        KETS - Kişisel Eğlence Tavsiye Sistemi - Developed with ❤️ by 
         <a href="https://www.linkedin.com/in/gncgulce/" target="_blank">Gülce Kästel 🎈</a>,
         <a href="https://www.linkedin.com/in/g%C3%BCldehan-%C3%A7akmak-uygun-a1032277/" target="_blank"> Güldehan Çakmak Uygun 🌋</a>,
         <a href="https://www.linkedin.com/in/zeynep-bakan-ba1996308/" target="_blank"> Zeynep Bakan 🎓</a>,
@@ -337,7 +337,7 @@ def show_main_page():
     with col1:
         st.header("🌡️ Vibe-o-Meter!")
         mood_options = ['Catch your mood'] + list(MOOD_DISPLAY_NAMES.values())
-        selected_mood_display_name = st.selectbox('Tell me about your feeling', mood_options, key='mood_selector')
+        selected_mood_display_name = st.selectbox('Select your mood', mood_options, key='mood_selector', label_visibility="collapsed", index=0)
 
         internal_mood = next((key for key, value in MOOD_DISPLAY_NAMES.items() if value == selected_mood_display_name),
                              None)
@@ -362,7 +362,7 @@ def show_main_page():
 
         with tab1:
             st.header("🎭 Genre Explorer")
-            selected_genre = st.selectbox("Choose below:", options=['Select a genre'] + genre_categories)
+            selected_genre = st.selectbox("Choose below:", options=['Select a genre'] + genre_categories, label_visibility="collapsed", index=0)
 
             if selected_genre != 'Select a genre':
                 if st.button("Get Genre Recommendations"):
