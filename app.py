@@ -345,9 +345,7 @@ def load_logo():
 
 def show_main_page():
     # Custom CSS for unified logo and title
-    if st.button("Go to Similar Movies", key="goto_similar"):
-        st.session_state.page = "similar"
-        st.rerun()
+
     st.markdown("""
     <style>
     .unified-header {
