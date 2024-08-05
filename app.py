@@ -481,18 +481,22 @@ def show_similar_movies_page(tconst):
 
 @st.cache_data
 def get_poster_url(imdb_id):
-    if not TMDB_API_KEY:
-        st.error("TMDB API key not found. Please check your configuration.")
-        return None
+    if not st.secrets.get("TMDB_API_KEY"):
+        logger.error("TMDB API key not found in secrets.")
+        return "Error: TMDB API key not found"
+
+    TMDB_API_KEY = st.secrets.get("TMDB_API_KEY")
     try:
         search_url = f"https://api.themoviedb.org/3/find/{imdb_id}?api_key={TMDB_API_KEY}&external_source=imdb_id"
         response = requests.get(search_url)
         response.raise_for_status()
         data = response.json()
 
+        logger.info(f"First API call response: {data}")
+
         if not data.get('movie_results'):
             logger.warning(f"No movie results found for IMDb ID: {imdb_id}")
-            return None
+            return f"No results: IMDb ID {imdb_id} not found in TMDB"
 
 
         if 'movie_results' in data and data['movie_results']:
@@ -501,21 +505,38 @@ def get_poster_url(imdb_id):
             response = requests.get(details_url)
             data = response.json()
 
+            logger.info(f"Second API call response: {data}")
+
             poster_path = data.get('poster_path')
             if poster_path:
-                return f"https://image.tmdb.org/t/p/w500{poster_path}"
+                poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}"
+                logger.info(f"Poster URL found: {poster_url}")
+                return poster_url
             else:
                 logger.warning(f"No poster path found for TMDB ID: {tmdb_id}")
-                return None
-            
+                return f"No poster: TMDB ID {tmdb_id} has no poster"
+
+
     except requests.exceptions.RequestException as e:
+
         logger.error(f"Error making request to TMDB API: {str(e)}")
+
+        return f"API Error: {str(e)}"
+
     except KeyError as e:
+
         logger.error(f"Unexpected data structure in TMDB API response: {str(e)}")
+
+        return f"Data Error: Unexpected response structure - {str(e)}"
+
     except Exception as e:
+
         logger.error(f"Unexpected error fetching poster for IMDb ID {imdb_id}: {str(e)}")
 
-    return None
+        return f"Unexpected Error: {str(e)}"
+
+with st.expander("Debug Logs"):
+    st.text(logging.getLogger().handlers[0].stream.getvalue())
 
 def display_movie_list(movies, section_key):
     for index, movie in movies.iterrows():
