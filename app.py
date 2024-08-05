@@ -15,7 +15,7 @@ import os
 
 
 # Set page config at the very beginning
-st.set_page_config(page_title="KETS", page_icon='🍿', layout="centered") # wide
+st.set_page_config(page_title="KETS", page_icon='🍿', layout="wide") # wide
 
 
 # Get the directory of the current script
@@ -287,8 +287,6 @@ def add_bg_from_url(url):
 # Example usage
 add_bg_from_local('Images/nebulabg.png')  # Use this for local images
 # add_bg_from_url('https://example.com/your-image.jpg')  # Use this for images hosted online
-
-
 
 
 def add_footer():
