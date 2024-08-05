@@ -345,7 +345,7 @@ def load_logo():
 
 def show_main_page():
     # Custom CSS for unified logo and title
-    if st.button("Go to Similar Movies"):
+    if st.button("Go to Similar Movies", key="goto_similar"):
         st.session_state.page = "similar"
         st.rerun()
     st.markdown("""
@@ -467,10 +467,6 @@ def show_main_page():
 
 
 def show_similar_movies_page(tconst):
-    if st.button("Go to Similar Movies"):
-        st.session_state.page = "similar"
-        st.rerun()
-
     movie_data = df[df['TCONST'] == tconst]
     if not movie_data.empty:
         movie_title = movie_data['ORIGINAL_TITLE'].values[0]
@@ -479,14 +475,14 @@ def show_similar_movies_page(tconst):
         similar_movies = get_similar_by_id(tconst, cosine_sim, df)
         display_movie_list(similar_movies, f'similar_{tconst}')
 
-        if st.button("Back to Main Page"):
-            st.query_params.clear()
-            st.experimental_rerun()
+        if st.button("Back to Main Page", key=f"back_main_{tconst}"):
+            st.session_state.page = "main"
+            st.rerun()
     else:
         st.warning(f"Movie data not found for TCONST: {tconst}")
-        if st.button("Back to Main Page"):
-            st.query_params.clear()
-            st.experimental_rerun()
+        if st.button("Back to Main Page", key="back_main_not_found"):
+            st.session_state.page = "main"
+            st.rerun()
 
     add_footer()
 
@@ -552,7 +548,6 @@ def display_movie_list(movies, section_key):
                 st.image(poster_url, width=100)
             else:
                 st.write("No poster available")
-                st.write(poster_url)
 
         with col2:
             st.write(f"**{movie['ORIGINAL_TITLE']}**")
@@ -571,12 +566,11 @@ def main():
     if 'page' not in st.session_state:
         st.session_state.page = "main"
 
-        # Navigation logic
     if st.session_state.page == "main":
         show_main_page()
     elif st.session_state.page == "similar":
-        show_similar_movies_page()
-        
+        show_similar_movies_page(st.session_state.get('selected_movie'))
+
     try:
     # Get query parameters
         query_params = st.query_params
