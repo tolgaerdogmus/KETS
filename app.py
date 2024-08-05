@@ -13,9 +13,9 @@ import traceback
 import configparser
 import os
 
-# Set page config at the very beginning
-st.set_page_config(page_title="KETS", page_icon='🍿', layout="wide")
 
+# Set page config at the very beginning
+st.set_page_config(page_title="KETS", page_icon='🍿', layout="centered") # wide
 
 
 # Get the directory of the current script
@@ -247,6 +247,50 @@ def display_movie_list(movies, section_key):
                 st.write("Similar movies found")
         st.markdown("---")
 
+def add_bg_from_local(image_file):
+    with open(image_file, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read())
+    st.markdown(
+    f"""
+    <style>
+    .stApp {{
+        background-image: url(data:image/{"png"};base64,{encoded_string.decode()});
+        background-size: cover
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
+    )
+
+def add_bg_from_url(url):
+    st.markdown(
+         f"""
+         <style>
+         .stApp {{
+            background-image: url({url});
+             background-attachment: fixed;
+             background-size: auto auto;  # Use the image's original size
+             background-repeat: no-repeat;
+             background-position: center bottom;  # Center horizontally, align to bottom
+             position: fixed;
+             top: 0;
+             left: 0;
+             right: 0;
+             bottom: 0;
+             z-index: -1;
+         }}
+         </style>
+         """,
+         unsafe_allow_html=True
+     )
+
+# Example usage
+add_bg_from_local('Images/nebulabg.png')  # Use this for local images
+# add_bg_from_url('https://example.com/your-image.jpg')  # Use this for images hosted online
+
+
+
+
 def add_footer():
     footer = """
         <style>
@@ -272,10 +316,9 @@ def add_footer():
         </style>
     <div class="footer">
         KETS - Kişisel Eğlence Tavsiye Sistemi - Developed with ❤️ by 
-        <a href="https://www.linkedin.com/in/gncgulce/" target="_blank">Gülce Kästel 🎈</a>,
-        <a href="https://www.linkedin.com/in/g%C3%BCldehan-%C3%A7akmak-uygun-a1032277/" target="_blank"> Güldehan Çakmak Uygun 🌋</a>,
-        <a href="https://www.linkedin.com/in/zeynep-bakan-ba1996308/" target="_blank"> Zeynep Bakan 🎓</a>,
-        <a href="https://www.linkedin.com/in/tolgaerdogmus/" target="_blank"> Tolga Erdoğmuş 🐱</a>       
+        <a href="https://www.linkedin.com/in/gncgulce/" target="_blank"> | Gülce Kästel 🦉🧠🎈 </a>
+        <a href="https://www.linkedin.com/in/zeynep-bakan-ba1996308/" target="_blank">| Zeynep Bakan 👩🏻‍🏫🧠🎓 </a>
+        <a href="https://www.linkedin.com/in/tolgaerdogmus/" target="_blank">| Tolga Erdoğmuş 👽🐱🛠️</a>       
     </div>
     """
     st.markdown(footer, unsafe_allow_html=True)
@@ -352,7 +395,7 @@ def show_main_page():
                     st.info("No recommendations available for this mood. Try another one!")
 
     with col2:
-        lottie_mood = load_lottieurl("https://lottie.host/51c74a6d-40e4-4957-9972-d6ac7b6ffaff/lfwdnWYJni.json")
+        lottie_mood = load_lottieurl("https://lottie.host/ca07f33a-da6a-45d1-b225-5b2c3a326df4/M8Nh7RCNEk.json")
         st_lottie(lottie_mood, key="mood_animation")
 
     # Additional features in expanders

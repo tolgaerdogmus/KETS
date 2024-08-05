@@ -1,10 +1,7 @@
-[theme]
-base="dark"
-primaryColor="#cf6322"
-backgroundColor="#091c28"
-textColor="#a7c341"
-[theme]
-primaryColor="#cf6322"
-backgroundColor="#040e14"
-secondaryBackgroundColor="#141728"
-textColor="#a7c341"
+# Custom theme named "kets_theme"
+[theme.kets_theme]
+primaryColor = "#FF4B4B"
+backgroundColor = "#1E1E1E"
+secondaryBackgroundColor = "#252526"
+textColor = "#FFFFFF"
+font = "sans serif"
