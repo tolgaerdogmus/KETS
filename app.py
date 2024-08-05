@@ -9,6 +9,7 @@ from streamlit_lottie import st_lottie
 import requests
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+import traceback
 
 
 # Set page config at the very beginning
@@ -417,14 +418,18 @@ def display_movie_list(movies, section_key):
 
 
 def main():
+    try:
     # Get query parameters
-    query_params = st.query_params
+        query_params = st.query_params
 
     # Check if we're on the similar movies page
-    if query_params.get("page") == "similar" and "tconst" in query_params:
-        show_similar_movies_page(query_params["tconst"])
-    else:
-        show_main_page()
+        if query_params.get("page") == "similar" and "tconst" in query_params:
+            show_similar_movies_page(query_params["tconst"])
+        else:
+            show_main_page()
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
+        st.error(traceback.format_exc())
 
 
 if __name__ == "__main__":
