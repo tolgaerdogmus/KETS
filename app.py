@@ -415,7 +415,7 @@ def show_main_page():
         st_lottie(lottie_mood, key="mood_animation")
 
     # Additional features in expanders
-    with st.expander("🆘 Can't find right vibe?"):
+    with st.expander("🆘 Can't find right vibe?", expanded=True):
         tab1, tab2, tab3, tab4, tab5 = st.tabs(
             ["Genre Explorer", "Top Rated", "Time Machine", "Favorite Directors", "Random Picks"])
 
