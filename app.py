@@ -473,14 +473,14 @@ def show_similar_movies_page(tconst):
         similar_movies = get_similar_by_id(tconst, cosine_sim, df)
         display_movie_list(similar_movies, f'similar_{tconst}')
 
-        if st.button("Back to Main Page", key=f"back_main_{tconst}"):
-            st.session_state.page = "main"
-            st.rerun()
+        # if st.button("Back to Main Page", key=f"back_main_{tconst}"):
+        #     st.session_state.page = "main"
+        #     st.rerun()
     else:
         st.warning(f"Movie data not found for TCONST: {tconst}")
-        if st.button("Back to Main Page", key="back_main_not_found"):
-            st.session_state.page = "main"
-            st.rerun()
+        # if st.button("Back to Main Page", key="back_main_not_found"):
+        #     st.session_state.page = "main"
+        #     st.rerun()
 
     add_footer()
 
