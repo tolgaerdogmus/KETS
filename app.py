@@ -13,13 +13,18 @@ import traceback
 import configparser
 import os
 import logging
+from io import StringIO
 
 # Set page config at the very beginning
 st.set_page_config(page_title="KETS", page_icon='🍿', layout="wide") # wide
-# Accessing a single secret
 
-logging.basicConfig(level=logging.INFO)
+
+# Set up logging with StringIO
+log_stream = StringIO()
+logging.basicConfig(stream=log_stream, level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
 
 
 try:
@@ -498,45 +503,47 @@ def get_poster_url(imdb_id):
             logger.warning(f"No movie results found for IMDb ID: {imdb_id}")
             return f"No results: IMDb ID {imdb_id} not found in TMDB"
 
+        tmdb_id = data['movie_results'][0]['id']
+        logger.info(f"TMDB ID found: {tmdb_id}")
 
-        if 'movie_results' in data and data['movie_results']:
-            tmdb_id = data['movie_results'][0]['id']
-            details_url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={TMDB_API_KEY}"
-            response = requests.get(details_url)
-            data = response.json()
+        # Second API call to get movie details
+        details_url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={TMDB_API_KEY}"
+        response = requests.get(details_url)
+        response.raise_for_status()
+        data = response.json()
 
-            logger.info(f"Second API call response: {data}")
+        logger.info(f"Second API call response: {data}")
 
-            poster_path = data.get('poster_path')
-            if poster_path:
-                poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}"
-                logger.info(f"Poster URL found: {poster_url}")
-                return poster_url
-            else:
-                logger.warning(f"No poster path found for TMDB ID: {tmdb_id}")
-                return f"No poster: TMDB ID {tmdb_id} has no poster"
-
+        poster_path = data.get('poster_path')
+        if poster_path:
+            poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}"
+            logger.info(f"Poster URL found: {poster_url}")
+            return poster_url
+        else:
+            logger.warning(f"No poster path found for TMDB ID: {tmdb_id}")
+            return f"No poster: TMDB ID {tmdb_id} has no poster"
 
     except requests.exceptions.RequestException as e:
-
         logger.error(f"Error making request to TMDB API: {str(e)}")
-
         return f"API Error: {str(e)}"
-
     except KeyError as e:
-
         logger.error(f"Unexpected data structure in TMDB API response: {str(e)}")
-
         return f"Data Error: Unexpected response structure - {str(e)}"
-
     except Exception as e:
-
         logger.error(f"Unexpected error fetching poster for IMDb ID {imdb_id}: {str(e)}")
-
         return f"Unexpected Error: {str(e)}"
 
+imdb_id = "tt0111161"  # Example: The Shawshank Redemption
+result = get_poster_url(imdb_id)
+if result.startswith("http"):
+    st.image(result, caption="Movie Poster")
+else:
+    st.error(f"Could not retrieve poster: {result}")
+
+# Display the logs in Streamlit
 with st.expander("Debug Logs"):
-    st.text(logging.getLogger().handlers[0].stream.getvalue())
+    st.text(log_stream.getvalue())
+
 
 def display_movie_list(movies, section_key):
     for index, movie in movies.iterrows():
