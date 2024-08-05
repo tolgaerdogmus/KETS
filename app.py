@@ -13,7 +13,8 @@ import traceback
 import configparser
 import os
 
-
+# Set page config at the very beginning
+st.set_page_config(page_title="KETS", page_icon='🍿', layout="wide") # wide
 # Accessing a single secret
 try:
     TMDB_API_KEY = st.secrets["TMDB_API_KEY"]
@@ -21,9 +22,6 @@ try:
 except KeyError:
     st.error("TMDB API key not found in secrets. Please check your configuration.")
     st.stop()
-
-# Set page config at the very beginning
-st.set_page_config(page_title="KETS", page_icon='🍿', layout="wide") # wide
 
 
 # Get the directory of the current script
