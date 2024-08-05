@@ -18,9 +18,9 @@ st.set_page_config(page_title="KETS", page_icon='🍿', layout="wide") # wide
 # Accessing a single secret
 try:
     TMDB_API_KEY = st.secrets["TMDB_API_KEY"]
-    st.success("TMDB API key successfully loaded from secrets!")
+    #st.success("TMDB API key successfully loaded from secrets!")
 except KeyError:
-    st.error("TMDB API key not found in secrets. Please check your configuration.")
+    #st.error("TMDB API key not found in secrets. Please check your configuration.")
     st.stop()
 
 
