@@ -67,7 +67,7 @@ genre_categories = [
 @st.cache_data
 def load_data():
     df = pd.read_csv('src/movies/datasets/movies_31-tem.csv', low_memory=False)
-    df = df[(df['VOTE_COUNT'] > 2000) & (df['AVG_RATING'] > 6.0)]
+    df = df[(df['VOTE_COUNT'] > 2500) & (df['AVG_RATING'] > 6.0)]
     df = df.reset_index(drop=True)
     return df
 
