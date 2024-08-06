@@ -1,5 +1,3 @@
-# [K.E.T.S. Kişisel Eğlence Tavsiye Sistemi Project App here. ](https://thekets.streamlit.app/)
-
 # K.E.T.S. PROJECT Movie Dataset Description
 
 ## Dataset Overview
