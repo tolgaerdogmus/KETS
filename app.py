@@ -330,7 +330,7 @@ def add_footer():
             }
         </style>
     <div class="footer">
-        KETS - Kişisel Eğlence Tavsiye Sistemi - Developed with ❤️ by 
+        Kişisel Eğlence Tavsiye Sistemi - Made with ❤️ by 
         <a href="https://www.linkedin.com/in/gncgulce/" target="_blank"> | Gülce Kästel 🦉🧠🎈 </a>
         <a href="https://www.linkedin.com/in/zeynep-bakan-ba1996308/" target="_blank">| Zeynep Bakan 👩🏻‍🏫🧠🎓 </a>
         <a href="https://www.linkedin.com/in/tolgaerdogmus/" target="_blank">| Tolga Erdoğmuş 👽🐱🛠️</a>       
